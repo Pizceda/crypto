@@ -13,11 +13,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Конфигурация - токен из переменных окружения
-BOT_TOKEN = os.getenv('BOT_TOKEN', '8334466637:AAG4NLqhL1_7DJvdrqC3_FN4FIWJaAa3y0U')
-CHANNEL_USERNAME = "@wexxi_code"
+# Получаем токен из переменных окружения
+BOT_TOKEN = os.getenv('BOT_TOKEN')
+if not BOT_TOKEN:
+    logger.error("❌ BOT_TOKEN не найден в переменных окружения!")
+    exit(1)
 
-# Ваше фото для всех меню
+CHANNEL_USERNAME = "@wexxi_code"
 MAIN_PHOTO_URL = "https://postimg.cc/5jp2NNDX"
 
 # Данные
@@ -945,13 +947,8 @@ async def check_prices(context: ContextTypes.DEFAULT_TYPE):
         logger.error(f"❌ Ошибка в check_prices: {e}")
 
 def main():
-    # Получаем токен из переменных окружения
-    token = os.getenv('BOT_TOKEN')
-    if not token:
-        logger.error("❌ BOT_TOKEN не найден в переменных окружения!")
-        return
-    
-    app = Application.builder().token(token).build()
+    # Токен уже проверен в начале кода
+    app = Application.builder().token(BOT_TOKEN).build()
     
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(handle_button_click))
