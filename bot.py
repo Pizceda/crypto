@@ -3,6 +3,7 @@ import sqlite3
 import asyncio
 import aiohttp
 import os
+import sys
 from datetime import datetime, timedelta
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
@@ -13,16 +14,32 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Получаем токен из переменных окружения
-BOT_TOKEN = os.getenv('BOT_TOKEN')
+# ====== КОНФИГУРАЦИЯ ======
+# Способ 1: Переменная окружения (для Railway)
+# Способ 2: Прямое указание токена (если переменные не работают)
+
+# Попробуем получить токен из переменных окружения
+BOT_TOKEN = os.environ.get('BOT_TOKEN')
+
+# Если не нашли в переменных окружения, используем прямое значение
 if not BOT_TOKEN:
-    logger.error("❌ BOT_TOKEN не найден в переменных окружения!")
-    exit(1)
+    logger.warning("⚠️ BOT_TOKEN не найден в переменных окружения, использую прямое значение")
+    BOT_TOKEN = "8334466637:AAG4NLqhL1_7DJvdrqC3_FN4FIWJaAa3y0U"
+
+# Проверяем что токен есть
+if not BOT_TOKEN or BOT_TOKEN == "your_bot_token_here":
+    logger.error("❌ BOT_TOKEN не установлен!")
+    sys.exit(1)
+
+logger.info(f"✅ Токен бота загружен. Длина: {len(BOT_TOKEN)} символов")
 
 CHANNEL_USERNAME = "@wexxi_code"
 MAIN_PHOTO_URL = "https://postimg.cc/5jp2NNDX"
 
-# Данные
+# Остальной код остается БЕЗ ИЗМЕНЕНИЙ...
+# [ВСТАВЬТЕ СЮДА ВЕСЬ ОСТАЛЬНОЙ КОД ИЗ ПРЕДЫДУЩЕГО СООБЩЕНИЯ]
+# От класса Database до конца файла
+
 CRYPTO_CURRENCIES = {
     "TON": "toncoin", "BTC": "bitcoin", "ETH": "ethereum",
     "BNB": "binancecoin", "SOL": "solana", "ADA": "cardano", "DOGE": "dogecoin"
@@ -37,6 +54,8 @@ BINANCE_SYMBOLS = {
     "TON": "TONUSDT", "BTC": "BTCUSDT", "ETH": "ETHUSDT",
     "BNB": "BNBUSDT", "SOL": "SOLUSDT", "ADA": "ADAUSDT", "DOGE": "DOGEUSDT"
 }
+
+# ... [ВСТАВЬТЕ ВЕСЬ ОСТАЛЬНОЙ КОД КЛАССОВ И ФУНКЦИЙ] ...
 
 # Кэширование
 price_cache = {}
@@ -961,3 +980,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
