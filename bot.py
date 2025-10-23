@@ -4,6 +4,7 @@ import asyncio
 import aiohttp
 import os
 import sys
+import time
 from datetime import datetime, timedelta
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
@@ -15,18 +16,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ====== КОНФИГУРАЦИЯ ======
-# Способ 1: Переменная окружения (для Railway)
-# Способ 2: Прямое указание токена (если переменные не работают)
+BOT_TOKEN = os.environ.get('BOT_TOKEN', "8334466637:AAG4NLqhL1_7DJvdrqC3_FN4FIWJaAa3y0U")
 
-# Попробуем получить токен из переменных окружения
-BOT_TOKEN = os.environ.get('BOT_TOKEN')
-
-# Если не нашли в переменных окружения, используем прямое значение
-if not BOT_TOKEN:
-    logger.warning("⚠️ BOT_TOKEN не найден в переменных окружения, использую прямое значение")
-    BOT_TOKEN = "8334466637:AAG4NLqhL1_7DJvdrqC3_FN4FIWJaAa3y0U"
-
-# Проверяем что токен есть
 if not BOT_TOKEN or BOT_TOKEN == "your_bot_token_here":
     logger.error("❌ BOT_TOKEN не установлен!")
     sys.exit(1)
@@ -36,10 +27,7 @@ logger.info(f"✅ Токен бота загружен. Длина: {len(BOT_TOK
 CHANNEL_USERNAME = "@wexxi_code"
 MAIN_PHOTO_URL = "https://postimg.cc/5jp2NNDX"
 
-# Остальной код остается БЕЗ ИЗМЕНЕНИЙ...
-# [ВСТАВЬТЕ СЮДА ВЕСЬ ОСТАЛЬНОЙ КОД ИЗ ПРЕДЫДУЩЕГО СООБЩЕНИЯ]
-# От класса Database до конца файла
-
+# Данные
 CRYPTO_CURRENCIES = {
     "TON": "toncoin", "BTC": "bitcoin", "ETH": "ethereum",
     "BNB": "binancecoin", "SOL": "solana", "ADA": "cardano", "DOGE": "dogecoin"
@@ -54,8 +42,6 @@ BINANCE_SYMBOLS = {
     "TON": "TONUSDT", "BTC": "BTCUSDT", "ETH": "ETHUSDT",
     "BNB": "BNBUSDT", "SOL": "SOLUSDT", "ADA": "ADAUSDT", "DOGE": "DOGEUSDT"
 }
-
-# ... [ВСТАВЬТЕ ВЕСЬ ОСТАЛЬНОЙ КОД КЛАССОВ И ФУНКЦИЙ] ...
 
 # Кэширование
 price_cache = {}
@@ -966,18 +952,34 @@ async def check_prices(context: ContextTypes.DEFAULT_TYPE):
         logger.error(f"❌ Ошибка в check_prices: {e}")
 
 def main():
-    # Токен уже проверен в начале кода
-    app = Application.builder().token(BOT_TOKEN).build()
-    
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(handle_button_click))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bot_service.handle_price_input))
-    
-    app.job_queue.run_repeating(check_prices, interval=30, first=10)
-    
-    logger.info("🤖 Бот запущен на Railway!")
-    app.run_polling()
+    try:
+        # Создаем приложение
+        app = Application.builder().token(BOT_TOKEN).build()
+        
+        # Добавляем обработчики
+        app.add_handler(CommandHandler("start", start))
+        app.add_handler(CallbackQueryHandler(handle_button_click))
+        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bot_service.handle_price_input))
+        
+        # Пытаемся запустить JobQueue (если доступен)
+        try:
+            if hasattr(app, 'job_queue') and app.job_queue:
+                app.job_queue.run_repeating(check_prices, interval=30, first=10)
+                logger.info("✅ JobQueue запущен для проверки цен")
+            else:
+                logger.warning("⚠️ JobQueue недоступен - уведомления о ценах не будут работать")
+        except Exception as job_error:
+            logger.warning(f"⚠️ Не удалось запустить JobQueue: {job_error}")
+        
+        logger.info("🎉 Бот полностью запущен и готов к работе на Railway!")
+        app.run_polling()
+        
+    except Exception as e:
+        logger.error(f"❌ Критическая ошибка при запуске бота: {e}")
+        # Ждем перед перезапуском
+        time.sleep(10)
+        logger.info("🔄 Перезапуск бота...")
+        main()
 
 if __name__ == '__main__':
     main()
-
